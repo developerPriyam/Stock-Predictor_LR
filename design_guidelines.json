@@ -1,0 +1,122 @@
+{
+  "theme": "DARK",
+  "archetype": "Archetype 2 (Performance Pro) adapted for Premium Fintech",
+  "colors": {
+    "background": "#050505",
+    "foreground": "#FFFFFF",
+    "surface": "rgba(255, 255, 255, 0.03)",
+    "surface_hover": "rgba(255, 255, 255, 0.06)",
+    "border": "rgba(255, 255, 255, 0.08)",
+    "primary": {
+      "DEFAULT": "#007AFF",
+      "foreground": "#FFFFFF",
+      "hover": "#3395FF"
+    },
+    "bullish": {
+      "DEFAULT": "#00C853",
+      "bg": "rgba(0, 200, 83, 0.1)",
+      "text": "#4CAF50"
+    },
+    "bearish": {
+      "DEFAULT": "#FF3B30",
+      "bg": "rgba(255, 59, 48, 0.1)",
+      "text": "#FF5252"
+    },
+    "neutral": {
+      "DEFAULT": "#8E8E93",
+      "foreground": "#1C1C1E"
+    },
+    "grid_lines": "rgba(255, 255, 255, 0.05)",
+    "glass": {
+      "background": "rgba(10, 10, 10, 0.6)",
+      "border": "rgba(255, 255, 255, 0.1)"
+    }
+  },
+  "typography": {
+    "headings": {
+      "fontFamily": "'Clash Display', 'Cabinet Grotesk', sans-serif",
+      "weights": ["500", "600", "700"],
+      "tracking": "tracking-tight"
+    },
+    "body": {
+      "fontFamily": "'IBM Plex Sans', sans-serif",
+      "weights": ["400", "500"]
+    },
+    "data_numbers": {
+      "fontFamily": "'IBM Plex Mono', 'JetBrains Mono', monospace",
+      "weights": ["400", "500", "600"],
+      "tracking": "tracking-tighter"
+    },
+    "hierarchy": {
+      "h1": "text-4xl sm:text-5xl lg:text-6xl tracking-tight leading-none font-semibold",
+      "h2": "text-2xl sm:text-3xl lg:text-4xl tracking-tight leading-tight",
+      "h3": "text-xl sm:text-2xl tracking-tight",
+      "h4": "text-lg sm:text-xl",
+      "body": "text-base leading-relaxed text-gray-300",
+      "small": "text-sm text-gray-400",
+      "overline": "text-xs font-mono uppercase tracking-[0.2em] text-gray-500"
+    }
+  },
+  "spacing_and_layout": {
+    "general": "Generous spacing philosophy. p-6 or p-8 for standard cards, p-12 to p-24 for marketing sections.",
+    "dashboard_grid": "Mode B: Control Room Grid. Base grid-cols-1 md:grid-cols-3 lg:grid-cols-4. gap-6. Dense but clear.",
+    "landing_grid": "Mode A: Tetris Grid for features and showcases. Asymmetrical bento boxes with gap-8.",
+    "container_padding": "Cards must have p-6 or p-8. No content touches the border.",
+    "alignment": "Optical alignment. Left-align data and typography. Center-align only for hero headlines."
+  },
+  "surface_strategies": {
+    "dashboard_cards": "Glassmorphism (The Crystal Variant). bg-[#0A0A0A]/60 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.12)]. Inner stroke mandatory.",
+    "header": "Sticky Glass. backdrop-blur-2xl bg-[#050505]/70 border-b border-white/10. z-50.",
+    "sidebar": "Solid Obsidian bg-[#050505] with right border border-white/10. Active item gets bg-white/5 and left border 2px primary.",
+    "buttons": "Flat solid primary color for CTAs. Glassy for secondary (bg-white/5 hover:bg-white/10 border border-white/10)."
+  },
+  "components": {
+    "charts": "Recharts. Use Monospace font for axes. Tooltip must be Glassmorphism. Colors: Volt Blue for line, Emerald/Blaze for candles. Remove background grid or use extremely faint white/5.",
+    "gauges": "Use SVG-based half-circle gauges for Trend and Confidence. Glow effects (drop-shadow) on the needle/active path.",
+    "tables": "Shadcn Table. border-collapse. Row hover is bg-white/5. Data cells must use monospace font for alignment.",
+    "inputs": "Shadcn Input. bg-black/50 border-white/10 focus:border-primary focus:ring-1 focus:ring-primary. Monospace placeholder for tickers.",
+    "tabs": "Shadcn Tabs. Custom h-auto. Active tab gets bg-white/10 text-white, inactive gets text-gray-500 hover:text-gray-300."
+  },
+  "animation_motion": {
+    "hover_states": "All interactive elements transition-all duration-200 ease-out.",
+    "cards": "Hover on cards: -translate-y-1 shadow-2xl border-white/20.",
+    "page_load": "Framer Motion staggered fade-up for dashboard widgets and landing page sections.",
+    "loading": "Use monospace ASCII loaders or subtle pulsing logos. No generic spinners."
+  },
+  "icons": {
+    "library": "@phosphor-icons/react",
+    "style": "Duotone or Regular weight. Size 20px or 24px.",
+    "installation": "yarn add @phosphor-icons/react"
+  },
+  "image_urls": {
+    "hero_background": {
+      "url": "https://images.unsplash.com/photo-1689443111130-6e9c7dfd8f9e?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1MDZ8MHwxfHNlYXJjaHwyfHxhYnN0cmFjdCUyMGRhcmslMjB0ZWNoJTIwYmFja2dyb3VuZHxlbnwwfHx8fDE3ODEwODY1NjV8MA&ixlib=rb-4.1.0&q=85",
+      "description": "Abstract dark tech background for Landing Page Hero section. Use with heavy black overlay (bg-black/60)."
+    },
+    "showcase_chart": {
+      "url": "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzNzl8MHwxfHNlYXJjaHwxfHxzdG9jayUyMG1hcmtldCUyMGNoYXJ0JTIwZGFya3xlbnwwfHx8fDE3ODEwODY1NjR8MA&ixlib=rb-4.1.0&q=85",
+      "description": "Stock market candlestick chart on dark screen. Use in Project Showcase page as a feature image."
+    },
+    "dynamic_abstract": {
+      "url": "https://images.pexels.com/photos/18337643/pexels-photo-18337643.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+      "description": "Dynamic neon abstract. Use for the AI prediction engine banner or empty states in the dashboard."
+    }
+  },
+  "instructions_to_main_agent": {
+    "critical_rules": [
+      "Follow ALL color codes strictly. Do NOT use Tailwind default slate/gray for backgrounds. Use #050505 and custom RGBA surfaces.",
+      "Implement fonts properly via Google Fonts or standard imports in index.html/CSS.",
+      "Do NOT use 'Inter' for headings. Use 'Clash Display' or a solid Serif/Grotesk. If unavailable, fallback to 'Space Grotesk' but 'Clash Display' via CDN is preferred.",
+      "Ensure all numeric data (prices, percentages, tickers) uses the monospace font.",
+      "In Dashboard, never center text unless explicitly a standalone empty state.",
+      "Add data-testid attributes to all buttons, inputs, and interactive charts.",
+      "Use Lucide React if Phosphor is not strictly required, but Phosphor is highly recommended for the premium look."
+    ],
+    "page_specifics": {
+      "landing_page": "High visual impact. Use the hero_background with an overlay. Big typography. Asymmetrical bento grid for features.",
+      "dashboard": "Control Room Grid. Strict hierarchy. Real-time data cards at top, main chart spanning 2-3 columns, AI side panel spanning 1 column.",
+      "project_showcase": "Editorial style. Wide images (use showcase_chart), generous vertical rhythm, clear explanations of MAE/RMSE.",
+      "documentation": "Swiss-style high contrast dark mode. Left sidebar nav, right content area. Highly legible text, lots of code blocks or data tables."
+    }
+  }
+}
