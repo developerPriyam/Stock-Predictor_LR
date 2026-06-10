@@ -1,0 +1,37 @@
+{
+  "summary": "Phase 3 testing complete. 12 new pytest backend tests written and 100% pass against live endpoints (root v3.0.0, NSE universal ticker RELIANCE.NS, ^GSPC index, /profile, /news+Claude AI summary, /compare with 3-ticker correlation matrix, /explain with 6 contributions, /model/info with cache+plugin sections, /model/reload, quote/predict cache hit, force_refresh bypass, full plugin model lifecycle with Ridge bundle). Full Playwright frontend walkthrough of Dashboard (incl. universal ticker analysis, watchlist toggle, recent strip, explanation card, model meta), Research (28 metrics, 10 news items, search→navigate), Compare (chart+table+correlation+add+remove ticker), Portfolio (form→table→summary→two pie charts), Showcase (active model banner + reload button) and Mobile (all 6 m-nav-* present). No console/page errors observed. All 50+ data-testid selectors found.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_phase3.py",
+    "/app/backend/tests/backend_test.py",
+    "/app/test_reports/pytest/phase3_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "server.py:714 — bizarre dead expression `int(close.tail(1).index[0].day) if False else _safe_float(df['Volume'].iloc[-1])`. The `if False` makes the int() branch unreachable; cleanup recommended (just use _safe_float directly).",
+    "Research.jsx: metric data-testid is derived from the human label (e.g. metric-p/e-(trailing), metric-eps-(trailing)). The Phase-3 spec referenced shorter names like metric-pe, metric-eps, metric-roe — UI works but consumers writing automation against the spec's testids will miss. Consider stable, short, label-independent testids.",
+    "server.py /api/stocks/compare loops _fetch_history twice per symbol (once in main loop, once again in correlation matrix builder). Both calls hit history_cache, so this is cheap, but the second loop could just re-use `df` from the first.",
+    "models/__init__.py: PLUGIN_REGISTRY caches a `None` sentinel per ticker, so once a ticker is queried without a plugin file it stays cached until /model/reload. This is intended, but if a user drops a .pkl mid-session WITHOUT calling /reload, new tickers seen for the first time will pick it up while already-queried tickers won't. Make sure docs mention /reload requirement.",
+    "Dashboard recent-strip is correctly empty on first load but recent-chips count was 0 even after switching AAPL→RELIANCE.NS in the same run. Verify storage.js useRecent persists the previous ticker BEFORE the swap (write-on-mount vs write-on-search). Likely a minor UX nit, not a bug — recent list shows up after a 2nd switch.",
+    "CORS: allow_origins=['*'] together with allow_credentials=True is rejected by browsers per spec — fine while there's no auth/cookies but flag for future auth work (carry-over from iteration_1).",
+    "Recharts width(-1)/height(-1) console warnings — same Phase 1 carry-over, still present, still cosmetic."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_phase3.py"
+  ],
+  "success_rate": {"backend": "100% (12/12 phase-3 + 13/13 phase-1 carry-over)", "frontend": "100%"},
+  "test_credentials": "N/A — app is public",
+  "seed_data_creation": "Plugin test creates and then deletes /app/backend/models/default.pkl (Ridge bundle) and reloads the model registry. State is restored to no-plugin after the test.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Phase 3 tests at /app/backend/tests/test_phase3.py — run with: REACT_APP_BACKEND_URL=$(grep REACT_APP_BACKEND_URL /app/frontend/.env | cut -d= -f2) pytest /app/backend/tests/test_phase3.py -v. EMERGENT_LLM_KEY is wired and Claude AI summary returns non-null on AAPL news. News endpoint can take 5-10s on cold call due to LLM round-trip; Compare can take 10-15s (3 predict + correlation). Caches: quote 60s, predict 5min, history 10min, news 15min. Plugin slot: drop joblib bundle at /app/backend/models/default.pkl then POST /api/model/reload, predict returns source='plugin'. Frontend testids verified for all 6 pages incl. mobile m-nav-* at viewport 390x844. Note Dashboard recent-strip lags one navigation behind because useRecent writes after analyze, not before. Note Research metric testids use label slug (metric-p/e-(trailing)) not the short names from the spec — UI passes but selector contract drifted.",
+  "rca of the issue": "No bugs to RCA. All 12 backend tests pass on first execution; all frontend selectors located; live LLM, yfinance, and plugin paths verified end-to-end."
+}

@@ -5,6 +5,9 @@ import Landing from "@/pages/Landing";
 import Dashboard from "@/pages/Dashboard";
 import Showcase from "@/pages/Showcase";
 import Docs from "@/pages/Docs";
+import Research from "@/pages/Research";
+import Compare from "@/pages/Compare";
+import Portfolio from "@/pages/Portfolio";
 import AppShell from "@/components/AppShell";
 
 export default function App() {
@@ -15,6 +18,10 @@ export default function App() {
           <Route path="/" element={<Landing />} />
           <Route element={<AppShell />}>
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/research" element={<Research />} />
+            <Route path="/research/:ticker" element={<Research />} />
+            <Route path="/compare" element={<Compare />} />
+            <Route path="/portfolio" element={<Portfolio />} />
             <Route path="/showcase" element={<Showcase />} />
             <Route path="/docs" element={<Docs />} />
           </Route>

@@ -53,6 +53,9 @@ except ImportError:
 MODELS_DIR = Path(__file__).parent
 DEFAULT_FEATURES = ["return_1", "return_5", "vol_20", "rsi", "macd_hist", "ratio_5_20"]
 
+# Registry: cleared on /api/model/reload so we re-discover .pkl files.
+PLUGIN_REGISTRY: dict[str, tuple] = {}
+
 
 def _load_pickle(path: Path):
     if _HAS_JOBLIB:
@@ -76,15 +79,20 @@ def find_model_file(ticker: str) -> Optional[Path]:
 
 
 def load_plugin_model(ticker: str):
-    """Return (model_obj, feature_names, output_kind, source_name) or None."""
+    """Return (model_obj, feature_names, output_kind, source_name) or None.
+    Cached in PLUGIN_REGISTRY; cleared on reload."""
+    key = ticker.upper()
+    if key in PLUGIN_REGISTRY:
+        return PLUGIN_REGISTRY[key]
     path = find_model_file(ticker)
     if path is None:
+        PLUGIN_REGISTRY[key] = None
         return None
     try:
         loaded = _load_pickle(path)
     except Exception as e:
-        # Don't crash the API if the pkl is malformed.
         print(f"[models] Failed to load {path}: {e}")
+        PLUGIN_REGISTRY[key] = None
         return None
 
     if isinstance(loaded, dict):
@@ -98,9 +106,12 @@ def load_plugin_model(ticker: str):
 
     if model is None or not hasattr(model, "predict"):
         print(f"[models] {path} did not contain a model with .predict()")
+        PLUGIN_REGISTRY[key] = None
         return None
 
-    return model, features, output, path.name
+    tup = (model, features, output, path.name)
+    PLUGIN_REGISTRY[key] = tup
+    return tup
 
 
 def predict_with_plugin(model_tuple, latest_features_df, last_close: float) -> dict:

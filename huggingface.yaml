@@ -1,0 +1,18 @@
+---
+title: StockVision AI
+emoji: 📈
+colorFrom: blue
+colorTo: gray
+sdk: docker
+app_port: 8001
+pinned: false
+license: mit
+---
+
+# StockVision AI
+
+Premium dark-theme fintech dashboard with AI-powered stock predictions, technical indicators, company research, news intelligence (Claude-powered AI summaries), multi-stock comparison, and portfolio tracking.
+
+See `DEPLOYMENT.md` for full instructions.
+
+Set the **Space Secret** `EMERGENT_LLM_KEY` (or your own Anthropic/OpenAI key) to enable the AI news summaries.

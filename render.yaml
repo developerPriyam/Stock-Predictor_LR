@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: stockvision-ai
+    runtime: docker
+    plan: starter
+    healthCheckPath: /api/
+    envVars:
+      - key: PORT
+        value: 8001
+      - key: CORS_ORIGINS
+        value: "*"
+      - key: EMERGENT_LLM_KEY
+        sync: false
+      - key: PREDICTION_CACHE_TTL
+        value: "300"
+      - key: QUOTE_CACHE_TTL
+        value: "60"
+      - key: HISTORY_CACHE_TTL
+        value: "600"
+      - key: NEWS_CACHE_TTL
+        value: "900"
+    dockerfilePath: ./Dockerfile
+    dockerBuildArgs:
+      REACT_APP_BACKEND_URL: https://stockvision-ai.onrender.com

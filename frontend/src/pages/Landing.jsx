@@ -7,10 +7,13 @@ const FEATURES = [
   { icon: Layers, title: "Technical Indicators", desc: "MA20, MA50, RSI, MACD, Bollinger Bands, ATR — all computed server-side.", testId: "feat-indicators" },
   { icon: Activity, title: "Trend & Sentiment", desc: "Trend gauge, momentum, volatility, support/resistance and market sentiment scoring.", testId: "feat-sentiment" },
   { icon: ShieldCheck, title: "Risk Analytics", desc: "Max drawdown, volatility, risk score and confidence on every prediction.", testId: "feat-risk" },
-  { icon: Globe2, title: "Global Markets", desc: "NASDAQ, NYSE, ETFs and crypto. Any Yahoo Finance ticker works.", testId: "feat-markets" },
+  { icon: Globe2, title: "Universal Markets", desc: "NSE (.NS), BSE (.BO), NASDAQ, NYSE, indices, ETFs and crypto. Any Yahoo Finance ticker works.", testId: "feat-markets" },
+  { icon: Cpu, title: "Plug-in Your Model", desc: "Drop a .pkl into /backend/models and your trained model becomes the primary engine — no re-training.", testId: "feat-plugin" },
+  { icon: Sparkles, title: "AI News Intelligence", desc: "Claude Sonnet 4.5 summarises headlines and scores sentiment automatically.", testId: "feat-news" },
+  { icon: BarChart3, title: "Explainable Predictions", desc: "See exactly which features drove each forecast, with weights and direction.", testId: "feat-explain" },
 ];
 
-const MARKETS = ["NASDAQ", "NYSE", "NYSE ARCA", "Crypto", "ETFs", "Indices"];
+const MARKETS = ["NASDAQ", "NYSE", "NSE (India)", "BSE (India)", "Indices", "Crypto", "ETFs"];
 
 const METRICS = [
   { label: "Directional Accuracy", value: "61.2%", note: "on held-out window" },

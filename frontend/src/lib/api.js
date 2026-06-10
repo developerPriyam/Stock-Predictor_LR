@@ -15,5 +15,12 @@ export const fetchIndicators = (ticker, period = "1Y") =>
 export const fetchPrediction = (ticker) => api.get(`/stocks/${ticker}/predict`).then((r) => r.data);
 export const fetchAnalytics = (ticker) => api.get(`/stocks/${ticker}/analytics`).then((r) => r.data);
 export const fetchModelInfo = () => api.get("/model/info").then((r) => r.data);
+export const fetchProfile = (ticker) => api.get(`/stocks/${ticker}/profile`).then((r) => r.data);
+export const fetchNews = (ticker, limit = 10) =>
+  api.get(`/stocks/${ticker}/news`, { params: { limit } }).then((r) => r.data);
+export const fetchCompare = (tickers) =>
+  api.get("/stocks/compare", { params: { tickers: tickers.join(",") } }).then((r) => r.data);
+export const fetchExplain = (ticker) => api.get(`/stocks/${ticker}/explain`).then((r) => r.data);
+export const reloadModel = () => api.post("/model/reload").then((r) => r.data);
 
 export default api;
