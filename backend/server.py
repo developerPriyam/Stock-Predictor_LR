@@ -18,6 +18,14 @@ import yfinance as yf
 from sklearn.linear_model import LinearRegression
 import ta
 
+from cache import prediction_cache
+from models import (
+    DEFAULT_FEATURES,
+    load_plugin_model,
+    predict_with_plugin,
+    list_plugin_models,
+)
+
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / ".env")
 
@@ -246,12 +254,8 @@ async def get_indicators(ticker: str, period: str = Query("1Y")):
     return _clean({"symbol": ticker, "period": period, "indicators": rows, "latest": latest})
 
 
-def _predict_next(df: pd.DataFrame) -> dict:
-    """Lightweight ML prediction using engineered features + Linear Regression.
-
-    Features: MA5, MA10, MA20, RSI, MACD, lag-1 return, lag-5 return, volatility.
-    Target: next-day log return. We fit on history and predict next day.
-    """
+def _build_features(df: pd.DataFrame) -> pd.DataFrame:
+    """Build the standard StockVision feature matrix (used by both built-in & plug-in)."""
     data = df.copy()
     data["return_1"] = data["Close"].pct_change()
     data["return_5"] = data["Close"].pct_change(5)
@@ -260,16 +264,23 @@ def _predict_next(df: pd.DataFrame) -> dict:
     data["ma20"] = data["Close"].rolling(20).mean()
     data["vol_20"] = data["return_1"].rolling(20).std()
     data["rsi"] = ta.momentum.RSIIndicator(close=data["Close"], window=14).rsi()
-    macd_ind = ta.trend.MACD(close=data["Close"])
-    data["macd_hist"] = macd_ind.macd_diff()
+    data["macd_hist"] = ta.trend.MACD(close=data["Close"]).macd_diff()
     data["ratio_5_20"] = data["ma5"] / data["ma20"]
-
-    feature_cols = ["return_1", "return_5", "vol_20", "rsi", "macd_hist", "ratio_5_20"]
-    # Target = next-day return
     data["target"] = data["Close"].pct_change().shift(-1)
-    data = data.dropna()
+    return data
 
-    if len(data) < 30:
+
+def _predict_next(df: pd.DataFrame) -> dict:
+    """Lightweight ML prediction using engineered features + Linear Regression.
+
+    Features: MA5, MA10, MA20, RSI, MACD, lag-1 return, lag-5 return, volatility.
+    Target: next-day return. We fit on history and predict next day.
+    """
+    data = _build_features(df)
+    feature_cols = DEFAULT_FEATURES
+    data_clean = data.dropna()
+
+    if len(data_clean) < 30:
         # Fallback: simple drift
         last = float(df["Close"].iloc[-1])
         return {
@@ -278,10 +289,11 @@ def _predict_next(df: pd.DataFrame) -> dict:
             "confidence": 0.5,
             "model": "fallback-mean",
             "feature_importance": [],
+            "source": "builtin",
         }
 
-    X = data[feature_cols].values
-    y = data["target"].values
+    X = data_clean[feature_cols].values
+    y = data_clean["target"].values
     split = int(len(X) * 0.8)
     X_train, X_test = X[:split], X[split:]
     y_train, y_test = y[:split], y[split:]
@@ -294,13 +306,13 @@ def _predict_next(df: pd.DataFrame) -> dict:
     dir_acc = float(np.mean(np.sign(y_pred_test) == np.sign(y_test))) if len(y_test) > 0 else 0.5
 
     # Predict next-day from last row of full data
-    last_features = data[feature_cols].iloc[-1].values.reshape(1, -1)
+    last_features = data_clean[feature_cols].iloc[-1].values.reshape(1, -1)
     pred_return = float(model.predict(last_features)[0])
     last_close = float(df["Close"].iloc[-1])
     pred_price = last_close * (1.0 + pred_return)
 
     # Confidence: blend direction-accuracy with magnitude clarity
-    vol = float(data["vol_20"].iloc[-1]) if not pd.isna(data["vol_20"].iloc[-1]) else 0.02
+    vol = float(data_clean["vol_20"].iloc[-1]) if not pd.isna(data_clean["vol_20"].iloc[-1]) else 0.02
     magnitude_clarity = float(min(1.0, abs(pred_return) / (vol + 1e-6)))
     confidence = float(np.clip(0.5 * dir_acc + 0.3 * magnitude_clarity + 0.2 * max(0.0, score), 0.35, 0.97))
 
@@ -324,14 +336,37 @@ def _predict_next(df: pd.DataFrame) -> dict:
         "r2_score": score,
         "model": "LinearRegression(features=6)",
         "feature_importance": feat_imp,
+        "source": "builtin",
     }
 
 
 @api_router.get("/stocks/{ticker}/predict")
-async def predict(ticker: str):
+async def predict(ticker: str, force_refresh: bool = Query(False)):
     ticker = ticker.upper()
+
+    # 1) Check TTL cache (skip if force_refresh).
+    cache_key = f"predict:{ticker}"
+    if not force_refresh:
+        cached = prediction_cache.get(cache_key)
+        if cached is not None:
+            return {**cached, "cache_hit": True}
+
+    # 2) Fetch history.
     df = _fetch_history(ticker, "2y", "1d")
-    pred = _predict_next(df)
+
+    # 3) If a plug-in model exists for this ticker, try it; else built-in.
+    pred = None
+    plugin = load_plugin_model(ticker)
+    if plugin is not None:
+        try:
+            features_df = _build_features(df).dropna()
+            last_close_val = float(df["Close"].iloc[-1])
+            pred = predict_with_plugin(plugin, features_df, last_close_val)
+        except Exception as e:
+            logger.warning(f"Plug-in prediction failed for {ticker}: {e}. Falling back to built-in.")
+            pred = None
+    if pred is None:
+        pred = _predict_next(df)
 
     last_close = float(df["Close"].iloc[-1])
     pred_price = pred["predicted_price"]
@@ -352,7 +387,7 @@ async def predict(ticker: str):
     if pred["confidence"] < 0.55 and recommendation in ("Buy", "Sell"):
         recommendation = "Hold"
 
-    return _clean({
+    payload = _clean({
         "symbol": ticker,
         "current_price": last_close,
         "predicted_price": pred_price,
@@ -363,9 +398,13 @@ async def predict(ticker: str):
         "direction_accuracy": pred.get("direction_accuracy", 0.5),
         "r2_score": pred.get("r2_score", 0.0),
         "model": pred["model"],
+        "source": pred.get("source", "builtin"),
         "feature_importance": pred["feature_importance"],
         "generated_at": datetime.now(timezone.utc).isoformat(),
+        "cache_hit": False,
     })
+    prediction_cache.set(cache_key, payload)
+    return payload
 
 
 @api_router.get("/stocks/{ticker}/analytics")
@@ -458,6 +497,8 @@ async def analytics(ticker: str):
 
 @api_router.get("/model/info")
 async def model_info():
+    plugins = list_plugin_models()
+    plugin_active = bool(plugins)
     return {
         "name": "StockVision AI - Hybrid Regression Forecaster",
         "version": "1.0.0",
@@ -484,7 +525,31 @@ async def model_info():
             "Multi-horizon forecasting (5d, 20d)",
             "Ensemble with XGBoost",
         ],
+        "plugin": {
+            "active": plugin_active,
+            "files": plugins,
+            "directory": "/app/backend/models/",
+        },
+        "cache": prediction_cache.stats(),
     }
+
+
+@api_router.post("/model/reload")
+async def model_reload():
+    """Invalidate prediction cache so newly-dropped .pkl models take effect."""
+    cleared = prediction_cache.invalidate("predict:")
+    return {"reloaded": True, "cache_entries_cleared": cleared, "plugins": list_plugin_models()}
+
+
+@api_router.get("/cache/stats")
+async def cache_stats():
+    return prediction_cache.stats()
+
+
+@api_router.delete("/cache")
+async def cache_clear():
+    cleared = prediction_cache.invalidate("")
+    return {"cleared": cleared}
 
 
 app.include_router(api_router)
