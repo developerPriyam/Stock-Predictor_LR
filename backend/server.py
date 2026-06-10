@@ -711,7 +711,7 @@ async def compare(tickers: str = Query(...)):
                 "volatility": volatility,
                 "rsi": rsi,
                 "market_cap": _safe_float(info.get("marketCap")),
-                "volume": int(close.tail(1).index[0].day) if False else _safe_float(df["Volume"].iloc[-1]),
+                "volume": _safe_float(df["Volume"].iloc[-1]),
                 "pe_ratio": _safe_float(info.get("trailingPE")),
                 "beta": _safe_float(info.get("beta")),
                 "predicted_change_pct": pred_pct,

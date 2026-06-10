@@ -36,9 +36,10 @@ export default function Dashboard() {
 
   const selectTicker = (v) => {
     const up = v.toUpperCase();
+    if (ticker && ticker !== up) recent.push(ticker);  // record OLD before switching
+    recent.push(up);
     setTicker(up);
     setDraft(up);
-    recent.push(up);
   };
 
   const suggestQ = useQuery({
