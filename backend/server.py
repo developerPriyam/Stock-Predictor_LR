@@ -335,7 +335,7 @@ def _run_prediction(ticker: str) -> tuple[dict, float, dict]:
         try:
             features_df = _build_features(df).dropna()
             last_close_val = float(df["Close"].iloc[-1])
-            pred = predict_with_plugin(plugin, features_df, last_close_val)
+            pred = predict_with_plugin(plugin, features_df, last_close_val, raw_history_df=df)
             if pred is not None:
                 pred["latest_features"] = {fc: _safe_float(features_df[fc].iloc[-1])
                                            for fc in DEFAULT_FEATURES if fc in features_df.columns}
