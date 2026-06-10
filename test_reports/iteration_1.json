@@ -1,0 +1,38 @@
+{
+  "summary": "First test iteration for StockVision AI MVP. Ran 13 pytest backend tests against /api endpoints and a full Playwright walkthrough of Landing → Dashboard → Showcase → Docs. All 13 backend tests passed (100%). All 31 frontend data-testid elements were found and core interactions (search w/ suggestions, popular pill click, period switch, navigation across all 3 pages, prediction card render with confidence/recommendation, analytics gauges, export buttons enabled) worked end-to-end with live yfinance data (verified AAPL price $301.54, TSLA $408.95).",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Dashboard chart-block", "issues": ["Recharts emits many console warnings: 'The width(-1) and height(-1) of chart should be greater than 0'. Indicates ResponsiveContainer is rendering before its parent has a measured size (initial mount race). Not visually broken but noisy and can mask real issues. Fix by giving the ResponsiveContainer wrapper an explicit minHeight or fixed height, or by gating render until the container ref has measured."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/backend_test.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "(Minor) Silence Recharts width/height(-1) warnings on Dashboard by setting an explicit height (or min-h) on the chart container wrapping ResponsiveContainer."
+  ],
+  "critical_code_review_comments": [
+    "server.py: every /predict call refits LinearRegression on a fresh yfinance pull -> 2-5s latency and double network/CPU. Cache the fitted model + history per ticker (TTL ~5 min) to remove cold-call latency and ease Yahoo rate limits.",
+    "server.py: get_quote() catches every Exception and re-raises as 500. Yahoo Finance returns empty info dict for invalid tickers; this can surface as 500 instead of 404. Test passed today (got 404), but invalid ticker handling depends on whether yfinance raises vs returns empty - consider explicitly checking info+history emptiness before the broad except.",
+    "server.py: _fetch_history is called multiple times in /quote (5d + 1y), /predict (2y), /analytics (1y) for the same ticker on a single dashboard load -> 4-5 Yahoo calls per stock view. Add per-request cache or in-memory TTL cache.",
+    "server.py: no MongoDB usage despite Mongo env vars being protected. If persistence isn't planned, document it; otherwise predictions/quotes could be cached in Mongo.",
+    "Frontend: many Recharts ResponsiveContainer warnings indicate the chart wrapper lacks deterministic sizing. Provide explicit height to avoid re-render thrash.",
+    "Backend: CORS allow_origins defaults to '*' with allow_credentials=True - this combination is rejected by browsers per spec. Fine while no auth/cookies are used, but flag for future auth work."
+  ],
+  "updated_files": [
+    "/app/backend/tests/backend_test.py"
+  ],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "test_credentials": "N/A - app is public, no auth",
+  "seed_data_creation": "None - app reads live data from Yahoo Finance",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Backend tests live at /app/backend/tests/backend_test.py and run with: pytest /app/backend/tests/backend_test.py -v --junitxml=/app/test_reports/pytest/pytest_results.xml. All endpoints are GET only (no body, no auth). yfinance is rate-limited - prefer AAPL/MSFT/TSLA. /predict re-trains per call so allow ~5s timeout. Frontend testids verified: landing-logo, hero-cta-primary/-secondary, final-cta, cta-launch-app, nav-dashboard/-showcase/-docs, ticker-input, btn-search, suggest-<SYMBOL>, pill-<SYMBOL>, period-1M/3M/6M/1Y/5Y, hero-quote, chart-block, prediction-card, recommendation-badge, analytics-trend/-confidence/-sentiment/-features, btn-share/-export-csv/-export-pdf, stat-marketcap/-volume/-52wh/-52wl/-open/-range."
+}
